@@ -1,0 +1,26 @@
+{
+  "extends": "./tsconfig.paths.json",
+  "ts-node": {
+    "require": ["tsconfig-paths/register"]
+  },
+  "compilerOptions": {
+    "target": "es6",
+    "module": "commonjs",
+    "rootDir": "./src",
+    "outDir": "./dist",
+
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+
+    "strict": true,
+
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+
+    "ignoreDeprecations": "6.0",
+
+    "typeRoots": ["./src/types", "./node_modules/@types"]
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "**/*.spec.ts"]
+}
