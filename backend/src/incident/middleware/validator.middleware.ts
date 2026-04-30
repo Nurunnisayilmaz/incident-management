@@ -1,5 +1,8 @@
 import { plainToInstance } from "class-transformer";
 import { validate } from "class-validator";
+import { getLogger } from "@/utils/logger";
+
+const logger = getLogger('Validator Middleware');
 
 export const validateDto = (DtoClass: any) => {
   return async (req: any, res: any, next: any) => {

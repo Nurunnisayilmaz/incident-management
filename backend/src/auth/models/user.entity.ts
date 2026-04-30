@@ -4,11 +4,14 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  Index,
 } from "typeorm";
 import { UserBaseType } from "../types/user.base.type";
 
 @Entity("users")
 export class User implements UserBaseType {
+
+  @Index()
   @PrimaryGeneratedColumn("uuid")
   id!: string;
 

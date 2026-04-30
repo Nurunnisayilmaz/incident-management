@@ -7,9 +7,12 @@ import { Incident } from "../models/incident.entity";
 import { AppDataSource, runTransaction } from "@/utils/database";
 import { IncidentStatusEnum } from "../models/enums/incident-status.enum";
 import { IncidentSeverityEnum } from "../models/enums/incident-severity.enum";
-import { IncidentServiceEnum } from "../models/enums/incident-service.enum";
 import { ILike } from "typeorm";
 import { AppError } from "@/utils/response/appError";
+import { getIO } from "@/utils/socket";
+import { IncidentAuditLogService } from "./incident-audit-log.service";
+import { IncidentOutputDto } from "../dto/incident.output.dto";
+import { PaginationMetadata } from "@/utils/pagination/types";
 
 const logger = getLogger('Incident Service');
 
@@ -17,7 +20,7 @@ export class IncidentService {
 
     private static repo = AppDataSource.getRepository(Incident);
 
-    static async create(dto: IncidentInputDto) {
+    static async create(dto: IncidentInputDto): Promise<IncidentOutputDto>  {
 
         const { title, description, service, severity } = dto;
 
@@ -38,16 +41,17 @@ export class IncidentService {
 
         await cache.deleteSmart(cacheKeys.incidents);
 
+        getIO().emit('incident:created', saved);
+
         return saved;
     }
 
     static async getList(
         page: number,
         limit: number,
-        search?: string,
+        service?: string,
         status?: IncidentStatusEnum,
         severity?: IncidentSeverityEnum,
-        service?: IncidentServiceEnum
     ) {
 
         const cacheKey = cacheKeys.incidents.key({ page, limit });
@@ -57,12 +61,11 @@ export class IncidentService {
 
         const where: any = {};
 
-        if (search) {
-            where.title = ILike(`%${search}%`);
+        if (service) {
+            where.service = ILike(`%${service}%`);
         }
 
         if (status) {
-            console.log('Filtering by status:', status);
             where.status = status;
         }
 
@@ -70,9 +73,6 @@ export class IncidentService {
             where.severity = severity;
         }
 
-        if (service) {
-            where.service = service;
-        }
 
         const result = await paginate(
             this.repo,
@@ -91,13 +91,13 @@ export class IncidentService {
         return result;
     }
 
-    static async getIncident(id: number) {
+    static async getIncident(id: number): Promise<IncidentOutputDto | null> {
         return this.repo.findOne({
             where: { id },
         });
     }
 
-    static async update(id: number, dto: Partial<IncidentInputDto>) {
+    static async update(id: number, dto: Partial<IncidentInputDto>): Promise<IncidentOutputDto | null> {
         const updated = await runTransaction(async (manager) => {
             const repo = manager.getRepository(Incident);
 
@@ -109,14 +109,25 @@ export class IncidentService {
                 throw new AppError(404, 'Incident not found');
             }
 
-            const merged = repo.merge(incident, dto);
+            const oldIncident = { ...incident };
 
-            return await repo.save(merged);
+            const merged = repo.merge(incident, dto);
+            const saved = await repo.save(merged);
+
+            await IncidentAuditLogService.logChanges(
+                id,
+                oldIncident,
+                saved
+            );
+
+            return saved;
         });
 
         logger.info('Incident updated', { id: updated.id });
 
         await cache.deleteSmart(cacheKeys.incidents);
+
+        getIO().emit('incident:updated', updated);
 
         return updated;
     }
@@ -134,5 +145,7 @@ export class IncidentService {
         });
         logger.info('Incident soft deleted', { id });
         await cache.deleteSmart(cacheKeys.incidents);
+
+        getIO().emit('incident:deleted', { id });
     }
 }

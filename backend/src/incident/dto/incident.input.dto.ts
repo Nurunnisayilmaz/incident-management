@@ -1,5 +1,4 @@
 import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
-import { IncidentServiceEnum } from '../models/enums/incident-service.enum';
 import { IncidentSeverityEnum } from '../models/enums/incident-severity.enum';
 
 export class IncidentInputDto {
@@ -13,8 +12,8 @@ export class IncidentInputDto {
   description!: string;
 
   @IsNotEmpty()
-  @IsEnum(IncidentServiceEnum)
-  service!: IncidentServiceEnum;
+  @IsString()
+  service!: string;
 
   @IsNotEmpty()
   @IsEnum(IncidentSeverityEnum)

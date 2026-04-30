@@ -29,6 +29,18 @@ export function initSocket(server: HttpServer) {
         }
     });
 
+    io.on('connection', (socket) => {
+        logger.info('Client connected', { userId: socket.data.userId });
+
+        socket.on('disconnect', () => {
+            logger.info('Client disconnected', { userId: socket.data.userId });
+        });
+
+        socket.on('connect_error', (err) => {
+            logger.error('Connection error:', err.message);
+        });
+    });
+
     return io;
 }
 export function getIO(): SocketIOServer {

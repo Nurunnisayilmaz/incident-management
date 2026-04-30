@@ -4,6 +4,7 @@ import envvars from '@/config/envvars';
 import { Incident } from '@/incident/models/incident.entity';
 import { AuthSession } from '@/auth/models/auth.session.entity';
 import { User } from '@/auth/models/user.entity';
+import { IncidentAuditLog } from '@/incident/models/incident-audit-log.entity';
 
 const logger = getLogger('Database');
 
@@ -16,7 +17,7 @@ export const AppDataSource = new DataSource({
   database: envvars.db.database,
   synchronize: envvars.db.synchronize,
 
-  entities: [User, AuthSession, Incident],
+  entities: [User, AuthSession, Incident, IncidentAuditLog],
 });
 
 export const connectDatabase = async () => {

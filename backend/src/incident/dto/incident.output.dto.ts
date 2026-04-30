@@ -2,7 +2,6 @@ import { IsEnum, IsInt, IsNotEmpty, IsString } from 'class-validator';
 import { IncidentSeverityEnum } from '../models/enums/incident-severity.enum';
 import { IncidentBaseType } from '../types/incident.base.type';
 import { IncidentStatusEnum } from '../models/enums/incident-status.enum';
-import { IncidentServiceEnum } from '../models/enums/incident-service.enum';
 
 export class IncidentOutputDto implements IncidentBaseType {
 
@@ -18,8 +17,8 @@ export class IncidentOutputDto implements IncidentBaseType {
   description!: string;
 
   @IsNotEmpty()
-  @IsEnum(IncidentServiceEnum)
-  service!: IncidentServiceEnum;
+  @IsString()
+  service!: string;
 
   @IsNotEmpty()
   @IsEnum(IncidentSeverityEnum)

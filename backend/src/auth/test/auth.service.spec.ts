@@ -1,27 +1,38 @@
 /// <reference types="jest" />
 
-import { AuthService } from './auth.service';
+// Create mock repositories first
+const mockUserRepository = {
+  create: jest.fn(),
+  save: jest.fn(),
+  findOne: jest.fn(),
+};
 
-// Mock models and utils
-jest.mock('../models/user.entity', () => {
-  const m: any = function (this: any, data: any) {
-    Object.assign(this, data);
-    this.save = jest.fn();
-  };
-  m.findById = jest.fn();
-  m.findOne = jest.fn();
-  return { __esModule: true, default: m };
-});
+const mockSessionRepository = {
+  create: jest.fn(),
+  save: jest.fn(),
+  findOne: jest.fn(),
+};
 
-jest.mock('../models/auth.session.entity', () => {
-  const m: any = function (this: any, data: any) {
-    Object.assign(this, data);
-    this.save = jest.fn();
-  };
-  m.findOne = jest.fn();
-  m.updateMany = jest.fn();
-  return { __esModule: true, default: m };
-});
+// Mock AppDataSource before importing anything
+jest.mock('../../utils/database', () => ({
+  AppDataSource: {
+    getRepository: jest.fn((entity: any) => {
+      if (entity.name === 'User') {
+        return mockUserRepository;
+      }
+      if (entity.name === 'AuthSession') {
+        return mockSessionRepository;
+      }
+    }),
+  },
+}));
+
+import { AuthService } from '../services/auth.service';
+import { AppDataSource } from '../../utils/database';
+
+// Mock the static repositories directly on the AuthService class
+(AuthService as any).userRepo = mockUserRepository;
+(AuthService as any).sessionRepo = mockSessionRepository;
 
 jest.mock('@/utils/auth/password', () => ({
   hashPassword: jest.fn().mockResolvedValue('hashed-pass'),
@@ -37,38 +48,50 @@ jest.mock('@/utils/auth/jwt', () => ({
 
 jest.mock('uuid', () => ({ v4: jest.fn().mockReturnValue('session-uuid') }));
 
-import User from '../models/user.entity';
-import AuthSession from '../models/auth.session.entity';
 import { hashPassword, comparePasswords } from '../../utils/auth/password';
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken, verifyAccessToken } from '../../utils/auth/jwt';
 
 describe('AuthService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Reset repository mocks
+    Object.values(mockUserRepository).forEach(mock => {
+      if (typeof mock === 'function' && 'mockClear' in mock) {
+        mock.mockClear();
+      }
+    });
+    Object.values(mockSessionRepository).forEach(mock => {
+      if (typeof mock === 'function' && 'mockClear' in mock) {
+        mock.mockClear();
+      }
+    });
   });
 
   describe('createUser', () => {
     it('hashes password and saves a new user', async () => {
       // Arrange
-      const mockSave = jest.fn();
-      const NewUser = jest.fn().mockImplementation(() => ({ save: mockSave }));
-      (User as any).mockImplementation = NewUser;
+      const mockUser = { username: 'alice', email: 'a@example.com', password: 'hashed-pass' };
+      mockUserRepository.create.mockReturnValue(mockUser);
+      mockUserRepository.save.mockResolvedValue(mockUser);
 
       // Act
       const result = await AuthService.createUser('alice', 'a@example.com', 'secret');
 
       // Assert
       expect(hashPassword).toHaveBeenCalledWith('secret');
+      expect(mockUserRepository.create).toHaveBeenCalled();
+      expect(mockUserRepository.save).toHaveBeenCalled();
     });
   });
 
   describe('findUserByEmail', () => {
     it('calls User.findOne with email', async () => {
-      (User.findOne as jest.Mock).mockResolvedValue({ username: 'bob' });
+      const mockUser = { username: 'bob', email: 'b@example.com' };
+      mockUserRepository.findOne.mockResolvedValue(mockUser);
 
       const res = await AuthService.findUserByEmail('b@example.com');
-      expect(User.findOne).toHaveBeenCalledWith({ email: 'b@example.com' });
-      expect(res).toEqual({ username: 'bob' });
+      expect(mockUserRepository.findOne).toHaveBeenCalledWith({ where: { email: 'b@example.com' } });
+      expect(res).toEqual(mockUser);
     });
   });
 
@@ -97,9 +120,10 @@ describe('AuthService', () => {
 
   describe('createAuthSession', () => {
     it('creates session and returns tokens', async () => {
-      (AuthSession.findOne as jest.Mock).mockResolvedValue(null);
-      const mockSave = jest.fn();
-      (AuthSession as any).mockImplementation = jest.fn().mockImplementation(() => ({ save: mockSave }));
+      mockSessionRepository.findOne.mockResolvedValue(null);
+      const mockSession = { userId: 'uid1', refreshToken: 'refresh-token', sessionId: 'session-uuid' };
+      mockSessionRepository.create.mockReturnValue(mockSession);
+      mockSessionRepository.save.mockResolvedValue(mockSession);
 
       const res = await AuthService.createAuthSession('uid1', 'u@example.com');
       expect(generateRefreshToken).toHaveBeenCalledWith('uid1');
@@ -112,7 +136,7 @@ describe('AuthService', () => {
   describe('refreshAuthSession', () => {
     it('returns new access token when refresh token valid and session exists', async () => {
       (verifyRefreshToken as jest.Mock).mockResolvedValue({ sub: 'uid1' });
-      (AuthSession.findOne as jest.Mock).mockResolvedValue({});
+      mockSessionRepository.findOne.mockResolvedValue({ userId: 'uid1', refreshToken: 'rtoken' });
       (generateAccessToken as jest.Mock).mockReturnValue('new-access');
 
       const res = await AuthService.refreshAuthSession('rtoken');
@@ -130,11 +154,12 @@ describe('AuthService', () => {
     it('returns user when token valid and user exists', async () => {
       const req: any = { headers: { authorization: 'Bearer atoken' }, cookies: {} };
       (verifyAccessToken as jest.Mock).mockResolvedValue({ sub: 'uid1' });
-      (User.findById as jest.Mock).mockResolvedValue({ _id: 'uid1' });
+      const mockUser = { id: 'uid1', email: 'u@example.com' };
+      mockUserRepository.findOne.mockResolvedValue(mockUser);
 
       const res = await AuthService.validateToken(req as any);
       expect(verifyAccessToken).toHaveBeenCalledWith('atoken');
-      expect(res).toEqual({ _id: 'uid1' });
+      expect(res).toEqual(mockUser);
     });
 
     it('throws when token missing', async () => {

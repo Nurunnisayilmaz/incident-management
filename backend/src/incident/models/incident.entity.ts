@@ -5,11 +5,11 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   DeleteDateColumn,
+  Index,
 } from 'typeorm';
 import { IncidentBaseType } from '../types/incident.base.type';
 import { IncidentSeverityEnum } from './enums/incident-severity.enum';
 import { IncidentStatusEnum } from './enums/incident-status.enum';
-import { IncidentServiceEnum } from './enums/incident-service.enum';
 
 @Entity('incidents')
 export class Incident implements IncidentBaseType {
@@ -22,11 +22,8 @@ export class Incident implements IncidentBaseType {
   @Column('text')
   description!: string;
 
-  @Column({
-    type: 'enum',
-    enum: IncidentServiceEnum,
-  })
-  service!: IncidentServiceEnum;
+  @Column()
+  service!: string;
 
   @Column({
     type: 'enum',
@@ -34,6 +31,7 @@ export class Incident implements IncidentBaseType {
   })
   severity!: IncidentSeverityEnum;
 
+  @Index()
   @Column({
     type: 'enum',
     enum: IncidentStatusEnum,
@@ -41,6 +39,7 @@ export class Incident implements IncidentBaseType {
   })
   status!: IncidentStatusEnum;
 
+  @Index()
   @CreateDateColumn()
   createdAt!: Date;
 

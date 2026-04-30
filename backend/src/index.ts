@@ -9,6 +9,7 @@ import * as rateLimiter from '@/utils/rateLimiter';
 import { createServer } from 'http';
 import { Routes } from './auth/routes';
 import { initSocket } from './utils/socket';
+import swaggerDocs from './utils/swagger';
 
 
 const logger = getLogger('App');
@@ -45,6 +46,9 @@ const bootstrap = async () => {
 
     // Routes
     Routes(app);
+
+    // Swagger docs
+    swaggerDocs(app, Number(envvars.app.port));
 
     try {
 
