@@ -42,7 +42,8 @@ export const login = async (req: Request, res: Response) => {
         sendSuccess(res, {
             id: userExists.id,
             username: userExists.username,
-            email: userExists.email
+            email: userExists.email,
+            accessToken
         });
     } catch (error) {
         sendError(req, res, error);
@@ -80,7 +81,7 @@ export const logout = async (req: Request, res: Response) => {
 
 export const getMe = async (req: Request, res: Response) => {
     try {
-        const userId = req.user._id.toString();
+        const userId = req.user.id.toString();
         const user = await UserService.getUserById(userId);
         sendSuccess(res, user);
     } catch (error) {

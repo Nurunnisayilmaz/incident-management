@@ -42,7 +42,7 @@ const bootstrap = async () => {
     app.use(express.urlencoded({ extended: true }));
     app.use(express.json());
     app.use(cookieParser());
-    app.use(cors());
+    app.use(cors({ origin: 'http://localhost:5173', credentials: true, allowedHeaders: ['Authorization', 'Content-Type'] }));
 
     // Routes
     Routes(app);

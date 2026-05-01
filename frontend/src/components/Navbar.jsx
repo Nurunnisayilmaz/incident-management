@@ -1,8 +1,30 @@
 import { Link } from "react-router-dom";
 import { Activity   } from "lucide-react";
 import ThemeSelector from "./ThemeSelector";
+import { useNavigate } from "react-router-dom";
+import axios from "../api/axios";
 
-function Navbar() {
+function Navbar({ user, setUser }) {
+
+  const navigate = useNavigate();
+
+  const handleLogout = async() => {
+    const token = localStorage.getItem('accessToken');
+    try {
+      await axios.post("/api/auth/logout", {}, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+    } catch (err) {
+      console.error("Error during logout:", err);
+    }
+    localStorage.removeItem('accessToken');
+    setUser(null);
+    window.location.href = "/";
+  };
+
+
   return (
     <div className="bg-base-100/80 backdrop-blur-lg border-b border-base-content/10 sticky top-0 z-50">
       <div className="navbar px-4 min-h-[4rem] justify-between">
@@ -18,11 +40,37 @@ function Navbar() {
           </Link>
         </div>
         {/* Right side navigation */}
+
         <div className="flex items-center gap-4">
+
+          {user ? (
+            <div className="flex items-center gap-4">
+              <button
+                className="btn btn-outline btn-sm"
+                onClick={handleLogout}
+              >
+                Logout
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-4">
+              <Link
+                to="/login"
+                className="btn btn-primary btn-sm"
+              >
+                Login
+              </Link>
+              <Link
+                to="/register"
+                className="btn btn-secondary btn-sm"
+              >
+                Register
+              </Link>
+            </div>
+          )}
           <ThemeSelector />
         </div>
         
-
       </div>
     </div>
   );
