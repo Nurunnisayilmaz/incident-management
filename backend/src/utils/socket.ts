@@ -9,13 +9,19 @@ let io: SocketIOServer;
 
 export function initSocket(server: HttpServer) {
     io = new SocketIOServer(server, {
-        cors: { origin: '*', methods: ['GET', 'POST'] }
+        cors: {
+            origin: "http://localhost:5173",
+            methods: ["GET", "POST"],
+            credentials: true
+        }
     });
 
     io.use(async (socket, next) => {
         try {
-            console.log('Socket handshake auth:', socket.handshake);
-            const token = socket.handshake.auth?.token;
+            const token = socket.handshake.auth?.token ||
+                          socket.handshake.headers.cookie
+                             ?.split("accessToken=")[1]
+                             ?.split(";")[0];
             if (!token) throw new AppError(401, 'Unauthenticated', 'Token missing');
 
             const decoded = await verifyAccessToken(token);

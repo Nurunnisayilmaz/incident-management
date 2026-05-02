@@ -23,10 +23,37 @@ const IncidentList = ({ incidents, loading, error }) => {
       });
 
       setDeleteId(null);
-      window.location.reload();
     } catch (err) {
       console.log("DELETE ERROR:", err.response?.data || err.message);
       alert("Failed to delete incident");
+    }
+  };
+
+  const getStatusBadge = (status) => {
+    switch (status?.toLowerCase()?.trim()) {
+      case "open":
+        return "badge-error";
+      case "investigating":
+        return "badge-warning";
+      case "resolved":
+        return "badge-success";
+      default:
+        return "badge-neutral";
+    }
+  };
+
+  const getSeverityBadge = (severity) => {
+    switch (severity?.toLowerCase()?.trim()) {
+      case "low":
+        return "badge-info";
+      case "medium":
+        return "badge-warning";
+      case "high":
+        return "badge-error";
+      case "critical":
+        return "badge-error";
+      default:
+        return "badge-neutral";
     }
   };
 
@@ -62,7 +89,9 @@ const IncidentList = ({ incidents, loading, error }) => {
               <h3 className="text-xl font-semibold">{incident.title}</h3>
 
               <div className="flex items-center gap-2">
-                <span className="badge badge-outline">{incident.status}</span>
+
+                <span className={`badge badge-outline ${getStatusBadge(incident.status)}`}>{incident.status}</span>
+                <span className={`badge badge-outline ${getSeverityBadge(incident.severity)}`}>{incident.severity}</span>
 
                 {/* AUDIT LOG */}
                 <button
@@ -92,7 +121,7 @@ const IncidentList = ({ incidents, loading, error }) => {
                 >
                   <Pencil size={16} />
                 </button>
-                
+
                 {/* DELETE */}
                 <button
                   title="Delete Incident"

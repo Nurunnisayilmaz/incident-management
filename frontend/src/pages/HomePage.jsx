@@ -5,6 +5,7 @@ import { Plus, ClipboardList, ArrowRight } from "lucide-react";
 import CreateIncidentForm from "../components/CreateIncidentForm";
 import IncidentList from "../components/IncidentList";
 import FilterSelect from "../components/FilterSelect";
+import { initSocket, disconnectSocket } from "../utils/socket";
 
 const HomePage = ({ user, error }) => {
   const [incidents, setIncidents] = useState([]);
@@ -52,6 +53,38 @@ const HomePage = ({ user, error }) => {
 
     fetchIncidents();
   }, [user, page, filters]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const socket = initSocket();
+
+    if (!socket) return;
+
+    const handleCreated = (data) => {
+      setIncidents((prev) => [data, ...prev]);
+    };
+
+    const handleUpdated = (data) => {
+      setIncidents((prev) =>
+        prev.map((item) => (item.id === data.id ? data : item)),
+      );
+    };
+
+    const handleDeleted = ({ id }) => {
+      setIncidents((prev) => prev.filter((i) => i.id !== id));
+    };
+
+    socket.on("incident:created", handleCreated);
+    socket.on("incident:updated", handleUpdated);
+    socket.on("incident:deleted", handleDeleted);
+
+    return () => {
+      socket.off("incident:created", handleCreated);
+      socket.off("incident:updated", handleUpdated);
+      socket.off("incident:deleted", handleDeleted);
+    };
+  }, [user]);
 
   const renderPagination = () => {
     if (!pagination) return null;
@@ -225,7 +258,7 @@ const HomePage = ({ user, error }) => {
                 to="/login"
                 className="btn btn-primary flex items-center gap-2"
               >
-                <ArrowRight  size={18} />
+                <ArrowRight size={18} />
                 Sign in to continue
               </Link>
             </div>
