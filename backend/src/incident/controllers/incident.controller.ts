@@ -52,7 +52,9 @@ export const update = async (req: Request, res: Response) => {
 
         const dto = req.body;
 
-        const result = await IncidentService.update(id, dto);
+        const userId = req.user.id.toString();
+
+        const result = await IncidentService.update(id, userId, dto);
 
         sendSuccess(res, result);
     } catch (error) {

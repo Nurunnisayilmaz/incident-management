@@ -3,6 +3,7 @@ import { Router } from "express";
 import { create, getDetail, getList, softDelete, update} from "../controllers/incident.controller";
 import { validateDto } from "../middleware/validator.middleware";
 import { IncidentInputDto } from "../dto/incident.input.dto";
+import { getIncidentAuditLogs } from "../controllers/incident-audit-log.controller";
 
 const router = Router();
 
@@ -151,5 +152,7 @@ router.patch("/incidents/:id", authenticate, update);
    *        description: Internal Server Error
    */
 router.delete("/incidents/:id", authenticate, softDelete);
+
+router.get("/incident-audit-logs/:incidentId", authenticate, getIncidentAuditLogs);
 
 export default router;

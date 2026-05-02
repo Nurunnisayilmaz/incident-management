@@ -12,7 +12,6 @@ import { AppError } from "@/utils/response/appError";
 import { getIO } from "@/utils/socket";
 import { IncidentAuditLogService } from "./incident-audit-log.service";
 import { IncidentOutputDto } from "../dto/incident.output.dto";
-import { PaginationMetadata } from "@/utils/pagination/types";
 
 const logger = getLogger('Incident Service');
 
@@ -20,7 +19,7 @@ export class IncidentService {
 
     private static repo = AppDataSource.getRepository(Incident);
 
-    static async create(dto: IncidentInputDto): Promise<IncidentOutputDto>  {
+    static async create(dto: IncidentInputDto): Promise<IncidentOutputDto> {
 
         const { title, description, service, severity } = dto;
 
@@ -54,8 +53,7 @@ export class IncidentService {
         severity?: IncidentSeverityEnum,
     ) {
 
-        const cacheKey = cacheKeys.incidents.key({ page, limit });
-
+        const cacheKey = cacheKeys.incidents.key({ page, limit, service, status, severity });
         const cached = await cache.get(cacheKey);
         if (cached) return cached;
 
@@ -97,7 +95,7 @@ export class IncidentService {
         });
     }
 
-    static async update(id: number, dto: Partial<IncidentInputDto>): Promise<IncidentOutputDto | null> {
+    static async update(id: number,userId: string, dto: Partial<IncidentInputDto>): Promise<IncidentOutputDto | null> {
         const updated = await runTransaction(async (manager) => {
             const repo = manager.getRepository(Incident);
 
@@ -117,7 +115,8 @@ export class IncidentService {
             await IncidentAuditLogService.logChanges(
                 id,
                 oldIncident,
-                saved
+                saved,
+                userId
             );
 
             return saved;

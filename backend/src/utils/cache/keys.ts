@@ -8,8 +8,15 @@ export const cacheKeys = {
     } satisfies CacheKeyEntry<PaginatedCacheKey, string>,
 
     incidents: {
-        key: (params: PaginatedCacheKey) =>
-            `/incidents?page=${params.page}&limit=${params.limit}`,
+        key: (params: PaginatedCacheKey & {
+            service?: string;
+            status?: string;
+            severity?: string;
+        }) =>
+            `/incidents?page=${params.page}&limit=${params.limit}` +
+            `&service=${params.service || ''}` +
+            `&status=${params.status || ''}` +
+            `&severity=${params.severity || ''}`,
         ttl: 60,
-    } satisfies CacheKeyEntry<PaginatedCacheKey, string>,
+    },
 };
