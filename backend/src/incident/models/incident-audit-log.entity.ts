@@ -7,12 +7,12 @@ import {
 } from 'typeorm';
 
 @Entity('incident_audit_logs')
-@Index(['incidentId'])
 export class IncidentAuditLog {
 
   @PrimaryGeneratedColumn()
   id!: number;
 
+  @Index()
   @Column()
   incidentId!: number;
 
@@ -28,6 +28,6 @@ export class IncidentAuditLog {
   @Column({ nullable: true })
   changedByUserId?: string;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz' })
   createdAt!: Date;
 }

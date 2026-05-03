@@ -81,6 +81,18 @@ const options: swaggerJsdoc.Options = {
             },
           },
         },
+        IncidentAuditLog: {
+          type: "object",
+          properties: {
+            id: { type: "integer" },
+            incidentId: { type: "integer" },
+            field: { type: "string" },
+            oldValue: { type: "string", nullable: true },
+            newValue: { type: "string", nullable: true },
+            changedByUserId: { type: "string", nullable: true },
+            createdAt: { type: "string", format: "date-time" }
+          }
+        },
         UserRegister: {
           type: "object",
           required: ["email", "password"],
@@ -182,7 +194,7 @@ const options: swaggerJsdoc.Options = {
 const swaggerSpec = swaggerJsdoc(options);
 
 function swaggerDocs(app: Application, port: number) {
-  
+
   app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
   app.get("/docs.json", (req: Request, res: Response) => {

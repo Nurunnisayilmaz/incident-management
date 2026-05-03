@@ -323,7 +323,7 @@ describe('IncidentService', () => {
       });
 
       // Act
-      const result = await IncidentService.update(1, updateDto);
+      const result = await IncidentService.update(1, 'user-1', updateDto);
 
       // Assert
       expect(runTransaction).toHaveBeenCalled();
@@ -346,7 +346,9 @@ describe('IncidentService', () => {
       });
 
       // Act & Assert
-      await expect(IncidentService.update(999, { title: 'New Title' })).rejects.toThrow('Incident not found');
+      await expect(IncidentService.update(999, 'user-1', { title: 'New Title' })).rejects.toThrow('Incident not found');
+
+      jest.spyOn(IncidentAuditLogService, 'logChanges').mockResolvedValue(undefined);
     });
   });
 

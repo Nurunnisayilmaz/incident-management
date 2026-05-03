@@ -27,10 +27,10 @@ export class AuthSession implements AuthSessionBaseType {
   @Column({ type: "timestamp", nullable: true })
   expiredAt!: Date | null;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz' })
   createdAt!: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt!: Date;
 
   @ManyToOne(() => User, { onDelete: "CASCADE" })

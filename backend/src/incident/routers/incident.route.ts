@@ -1,6 +1,6 @@
 import { authenticate } from "@/auth/middlewares/authenticate";
 import { Router } from "express";
-import { create, getDetail, getList, softDelete, update} from "../controllers/incident.controller";
+import { create, getDetail, getList, softDelete, update } from "../controllers/incident.controller";
 import { validateDto } from "../middleware/validator.middleware";
 import { IncidentInputDto } from "../dto/incident.input.dto";
 import { getIncidentAuditLogs } from "../controllers/incident-audit-log.controller";
@@ -153,6 +153,47 @@ router.patch("/incidents/:id", authenticate, update);
    */
 router.delete("/incidents/:id", authenticate, softDelete);
 
+
+/**
+ * @openapi
+ * '/api/incident-audit-logs/{incidentId}':
+ *  get:
+ *     tags:
+ *     - Incident Audit Logs
+ *     summary: Get audit logs for a specific incident
+ *     parameters:
+ *      - name: incidentId
+ *        in: path
+ *        required: true
+ *        schema:
+ *          type: integer
+ *        description: Incident ID
+ *      - name: page
+ *        in: query
+ *        required: false
+ *        schema:
+ *          type: integer
+ *          default: 1
+ *      - name: limit
+ *        in: query
+ *        required: false
+ *        schema:
+ *          type: integer
+ *          default: 10
+ *     responses:
+ *      200:
+ *        description: Audit logs retrieved successfully
+ *        content:
+ *          application/json:
+ *            schema:
+ *              $ref: '#/components/schemas/IncidentAuditLog'
+ *      401:
+ *        description: Unauthorized
+ *      400:
+ *        description: Bad Request
+ *      500:
+ *        description: Internal Server Error
+ */
 router.get("/incident-audit-logs/:incidentId", authenticate, getIncidentAuditLogs);
 
 export default router;
